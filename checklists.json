@@ -1,0 +1,113 @@
+{
+  "theft_robbery": {
+    "display_name": "चोरी / डकैती (Theft / Robbery)",
+    "display_name_en": "Theft / Robbery",
+    "typical_sections": ["IPC 379", "IPC 380", "IPC 392", "IPC 394", "IPC 397", "IPC 411"],
+    "keywords_hi": ["चोरी", "डकैती", "लूट", "चुराया", "चोरी हो गई", "सामान गायब", "तोड़कर", "नकबजनी", "झपट", "बरामदगी", "संपत्ति"],
+    "keywords_en": ["theft", "robbery", "burglary", "stolen", "loot", "snatch", "recovery"],
+    "required_items": [
+      {"id": "fir", "label_hi": "प्राथमिकी (FIR) संख्या और दिनांक", "label_en": "FIR number and date"},
+      {"id": "ps", "label_hi": "थाना का नाम", "label_en": "Police station name"},
+      {"id": "place_time", "label_hi": "घटना का स्थान, दिनांक और समय", "label_en": "Place, date and time of occurrence"},
+      {"id": "complainant", "label_hi": "शिकायतकर्ता / पीड़ित का विवरण", "label_en": "Complainant / victim details"},
+      {"id": "accused", "label_hi": "आरोपी का विवरण (नाम, पता, पहचान चिन्ह)", "label_en": "Accused details (name, address, identifier)"},
+      {"id": "witnesses", "label_hi": "मुख्य गवाह (प्रत्यक्षदर्शी, पंच गवाह)", "label_en": "Key witnesses (eye-witness, panch witnesses)"},
+      {"id": "property_desc", "label_hi": "चोरी हुई संपत्ति का विवरण (प्रकार, बनावट, मूल्य)", "label_en": "Description of stolen property (type, make, value)"},
+      {"id": "ownership_proof", "label_hi": "संपत्ति के स्वामित्व का प्रमाण (बिल, दस्तावेज)", "label_en": "Ownership proof of property (bill, documents)"},
+      {"id": "seizure_memo", "label_hi": "बरामदगी / जब्ती मेमो", "label_en": "Recovery / seizure memo of property"},
+      {"id": "chain_custody", "label_hi": "बरामद वस्तुओं की कस्टडी चेन विवरण", "label_en": "Chain of custody details for recovered items"},
+      {"id": "site_plan", "label_hi": "नक्शा मौका / स्थल निरीक्षण मेमो", "label_en": "Site plan / spot inspection memo"},
+      {"id": "witness_stmt", "label_hi": "गवाहों के बयान (संबंधित CrPC धारा के अंतर्गत)", "label_en": "Witness statements (under relevant CrPC section)"},
+      {"id": "cctv", "label_hi": "CCTV फुटेज विवरण या अनुलग्नक (यदि उपलब्ध)", "label_en": "CCTV footage description or annexure (if relevant)"},
+      {"id": "spot_photos", "label_hi": "घटनास्थल / संपत्ति के फोटोग्राफ", "label_en": "Photographs of spot / property"},
+      {"id": "arrest_memo", "label_hi": "गिरफ्तारी मेमो (यदि आरोपी गिरफ्तार)", "label_en": "Arrest memo (if accused arrested)"},
+      {"id": "confession_disclosure", "label_hi": "स्वीकारोक्ति या प्रकटीकरण बयान (यदि कोई)", "label_en": "Confessional or disclosure statements (if any)"},
+      {"id": "personal_search", "label_hi": "गिरफ्तारी एवं व्यक्तिगत तलाशी मेमो", "label_en": "Arrest & personal search memo"},
+      {"id": "property_seal", "label_hi": "संपत्ति जब्ती मेमो + सील विवरण", "label_en": "Property seizure memo + seal details"},
+      {"id": "malkhana_forward", "label_hi": "संपत्ति को कोर्ट मालखाना में अग्रेषण रिपोर्ट", "label_en": "Forwarding report of property to court malkhana"},
+      {"id": "supplementary", "label_hi": "पूरक आरोप पत्र (यदि बाद में बरामदगी)", "label_en": "Supplementary chargesheet (if later recovery)"}
+    ]
+  },
+
+  "assault_hurt": {
+    "display_name": "मारपीट / चोट (Assault / Hurt)",
+    "display_name_en": "Assault / Hurt",
+    "typical_sections": ["IPC 323", "IPC 324", "IPC 325", "IPC 326", "IPC 307"],
+    "keywords_hi": ["मारपीट", "चोट", "मारा", "पीटा", "घायल", "हमला", "लाठी", "चाकू", "खून", "डंडी", "गाली-गलौच", "रंजिश"],
+    "keywords_en": ["assault", "hurt", "injury", "attack", "wound", "grievous", "weapon", "blunt"],
+    "required_items": [
+      {"id": "fir", "label_hi": "प्राथमिकी (FIR) विवरण (संख्या, दिनांक, थाना)", "label_en": "FIR details (number, date, PS)"},
+      {"id": "place_time", "label_hi": "मारपीट का स्थान, दिनांक, समय", "label_en": "Place, date, time of assault"},
+      {"id": "victim", "label_hi": "पीड़ित का विवरण", "label_en": "Victim details"},
+      {"id": "accused", "label_hi": "आरोपी का विवरण", "label_en": "Accused details"},
+      {"id": "witnesses", "label_hi": "गवाह (प्रत्यक्षदर्शी, रिश्तेदार)", "label_en": "Witnesses (eye-witness, relatives)"},
+      {"id": "mlc", "label_hi": "मेडिको लीगल केस (MLC) / चिकित्सा परीक्षण रिपोर्ट", "label_en": "MLC / medical examination report of victim"},
+      {"id": "injury_cert", "label_hi": "चोट प्रमाणपत्र – चोटों की प्रकृति और संख्या", "label_en": "Injury certificate describing nature and number of injuries"},
+      {"id": "injury_photos", "label_hi": "चोटों के फोटोग्राफ (यदि उपलब्ध)", "label_en": "Photographs of injuries (if available)"},
+      {"id": "doctor_opinion", "label_hi": "चोटों की प्रकृति पर डॉक्टर की राय (साधारण/गम्भीर, प्रयुक्त हथियार)", "label_en": "Doctor's opinion on nature of injuries (simple/grievous, weapon used)"},
+      {"id": "referral_docs", "label_hi": "रेफरल दस्तावेज यदि उच्च केंद्र में भेजा (if higher centre)", "label_en": "Referral documents if moved to higher centre"},
+      {"id": "weapon_desc", "label_hi": "हथियार का विवरण (चाकू, लाठी, कुंदा, बंदूक)", "label_en": "Weapon description (knife, lathi, blunt object, firearm)"},
+      {"id": "weapon_seizure", "label_hi": "हथियार का जब्ती मेमो (यदि बरामद)", "label_en": "Seizure memo of weapon (if recovered)"},
+      {"id": "motive", "label_hi": "मकसद / पूर्व रंजिश (यदि प्रासंगिक)", "label_en": "Motive / prior enmity (if relevant)"},
+      {"id": "section_mapping", "label_hi": "धारा-वार मानचित्रण (कौन सी चोट कौन सी IPC धारा)", "label_en": "Section-wise mapping (which injury supports which IPC section)"},
+      {"id": "arrest_medical", "label_hi": "गिरफ्तारी मेमो एवं आरोपी का चिकित्सा परीक्षण (यदि प्रासंगिक)", "label_en": "Arrest memo & medical examination of accused (if relevant)"},
+      {"id": "witness_stmt", "label_hi": "गवाहों के बयान – चोट और मारपीट की पुष्टि", "label_en": "Witness statements corroborating injuries and manner of assault"}
+    ]
+  },
+
+  "cyber_fraud": {
+    "display_name": "साइबर धोखाधड़ी (Cyber Fraud / Online Cheating)",
+    "display_name_en": "Cyber Fraud / Online Cheating",
+    "typical_sections": ["IPC 419", "IPC 420", "IPC 468", "IPC 471", "IT Act 66C", "IT Act 66D"],
+    "keywords_hi": ["ऑनलाइन", "साइबर", "धोखाधड़ी", "ठगी", "UPI", "बैंक", "OTP", "फ्रॉड", "ट्रांजेक्शन", "अकाउंट", "पैसे", "ट्रांसफर", "कस्टमर केयर", "कॉल"],
+    "keywords_en": ["cyber", "online", "fraud", "cheating", "UPI", "bank", "OTP", "transaction", "phishing", "payment"],
+    "required_items": [
+      {"id": "fir", "label_hi": "प्राथमिकी (FIR) विवरण", "label_en": "FIR details"},
+      {"id": "platform_mode", "label_hi": "प्लेटफॉर्म का विवरण (UPI, बैंकिंग ऐप, सोशल मीडिया, OLX आदि)", "label_en": "Platform used (UPI, banking app, social media, OLX, etc.)"},
+      {"id": "txn_datetime", "label_hi": "लेनदेन का दिनांक/समय", "label_en": "Date/time of transaction(s)"},
+      {"id": "amount", "label_hi": "शामिल राशि", "label_en": "Amount involved"},
+      {"id": "txn_records", "label_hi": "लेनदेन रिकॉर्ड (बैंक स्टेटमेंट, UPI स्क्रीनशॉट)", "label_en": "Transaction records (bank statement, UPI screenshots)"},
+      {"id": "payment_logs", "label_hi": "पेमेंट गेटवे लॉग (यदि उपलब्ध)", "label_en": "Payment gateway logs (if available)"},
+      {"id": "chat_logs", "label_hi": "कॉल डिटेल रिकॉर्ड / चैट स्क्रीनशॉट", "label_en": "Call detail records / chat screenshots"},
+      {"id": "email_headers", "label_hi": "ईमेल हेडर / मैसेज ID", "label_en": "Email headers / message IDs"},
+      {"id": "device_ids", "label_hi": "डिवाइस पहचानकर्ता (IMEI, IP पता, यूजर ID)", "label_en": "Device identifiers (IMEI, IP address, user IDs)"},
+      {"id": "device_seizure", "label_hi": "उपकरणों का जब्ती मेमो (मोबाइल, लैपटॉप)", "label_en": "Seizure memo of devices (mobile, laptop)"},
+      {"id": "forensic_image", "label_hi": "जब्त उपकरणों की फोरेंसिक इमेज / हैश", "label_en": "Forensic image / hash of seized devices"},
+      {"id": "bank_request", "label_hi": "बैंकों/सेवा प्रदाताओं को भेजे गए अनुरोध (पावती सहित)", "label_en": "Requests sent to banks/service providers (with acknowledgement)"},
+      {"id": "bank_response", "label_hi": "सेवा प्रदाताओं से प्राप्त उत्तर (KYC, लॉग आदि)", "label_en": "Response letters from service providers (KYC, logs, etc.)"},
+      {"id": "digital_id_link", "label_hi": "इलेक्ट्रॉनिक साक्ष्य का आरोपी की पहचान से जोड़ना", "label_en": "Linking of electronic evidence to accused identity"},
+      {"id": "chain_digital", "label_hi": "डिजिटल साक्ष्यों की कस्टडी चेन", "label_en": "Chain of custody for digital evidence"},
+      {"id": "fsl_cyber", "label_hi": "FSL / साइबर फोरेंसिक रिपोर्ट (यदि किया गया)", "label_en": "FSL / cyber-forensic report (if done)"},
+      {"id": "account_freeze", "label_hi": "खाता फ्रीज / रिकवरी कदम (यदि कोई)", "label_en": "Account freezing / recovery steps (if any)"},
+      {"id": "complainant", "label_hi": "शिकायतकर्ता का विवरण", "label_en": "Complainant details"},
+      {"id": "accused", "label_hi": "आरोपी का विवरण", "label_en": "Accused details"},
+      {"id": "witness_stmt", "label_hi": "गवाहों के बयान", "label_en": "Witness statements"}
+    ]
+  },
+
+  "ndps": {
+    "display_name": "एनडीपीएस / मादक द्रव्य (NDPS / Drugs / Narcotics)",
+    "display_name_en": "NDPS (Drugs / Narcotics)",
+    "typical_sections": ["NDPS 20", "NDPS 21", "NDPS 22", "NDPS 27A"],
+    "keywords_hi": ["गांजा", "चरस", "अफीम", "हेरोइन", "स्मैक", "नशीला", "मादक", "ड्रग्स", "NDPS", "तस्करी", "बरामद", "पाउडर", "पदार्थ"],
+    "keywords_en": ["ganja", "cannabis", "heroin", "opium", "drugs", "narcotic", "NDPS", "smack", "contraband"],
+    "required_items": [
+      {"id": "fir", "label_hi": "प्राथमिकी (FIR) विवरण", "label_en": "FIR details"},
+      {"id": "seizure_place_time", "label_hi": "जब्ती का सटीक स्थान (सार्वजनिक स्थान, घर, वाहन), दिनांक और समय", "label_en": "Exact location of seizure (public place, house, vehicle), date/time"},
+      {"id": "substance_desc", "label_hi": "पदार्थ का विवरण – प्रकार और मात्रा (छोटी/मध्यवर्ती/वाणिज्यिक)", "label_en": "Quantity and type of contraband (small, intermediate, commercial)"},
+      {"id": "ndps_compliance", "label_hi": "NDPS धारा 42/50 आदि के अंतर्गत सूचना/अनुपालन", "label_en": "Notice / compliance under relevant NDPS sections (e.g., 42, 50)"},
+      {"id": "search_memo", "label_hi": "तलाशी मेमो (व्यक्ति/वाहन/मकान)", "label_en": "Search memo (person/vehicle/house)"},
+      {"id": "seizure_memo", "label_hi": "जब्ती मेमो – सील संख्या और विवरण सहित", "label_en": "Seizure memo of contraband with seal number and description"},
+      {"id": "weighment", "label_hi": "तौल पंचनामा (तराजू/तौल मशीन विवरण सहित)", "label_en": "Weighment panchnama with scale details"},
+      {"id": "sample_memo", "label_hi": "नमूना ड्राइंग मेमो (कितने नमूने, प्रति नमूना वजन)", "label_en": "Sample drawing memo (how many samples, weight per sample)"},
+      {"id": "chain_custody", "label_hi": "कस्टडी चेन लॉग (जब्ती से मालखाना से FSL तक)", "label_en": "Chain of custody log (from seizure to malkhana to FSL)"},
+      {"id": "malkhana", "label_hi": "मालखाना रजिस्टर अर्क (प्रवेश संख्या, दिनांक)", "label_en": "Malkhana register extract (entry number, date)"},
+      {"id": "fsl_dispatch", "label_hi": "FSL भेजने का मेमो (सील छाप सहित)", "label_en": "Dispatch memo to FSL with seal impression"},
+      {"id": "fsl_report", "label_hi": "FSL रिपोर्ट – पदार्थ की प्रकृति और शुद्धता की पुष्टि", "label_en": "FSL report confirming nature and purity of substance"},
+      {"id": "expert_opinion", "label_hi": "विशेषज्ञ राय (यदि आवश्यक)", "label_en": "Expert opinion (if needed)"},
+      {"id": "independent_witness", "label_hi": "स्वतंत्र गवाहों (पंचों) के बयान", "label_en": "Statements of independent witnesses (panchas)"},
+      {"id": "arrest_memo", "label_hi": "आरोपी का गिरफ्तारी मेमो", "label_en": "Accused's arrest memo"},
+      {"id": "mandatory_compliance", "label_hi": "अनिवार्य प्रावधानों का अनुपालन नोट", "label_en": "Compliance with mandatory provisions"}
+    ]
+  }
+}
