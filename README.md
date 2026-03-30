@@ -11,6 +11,26 @@ This is time-consuming, error-prone, and delays justice delivery.
 
 **Our solution** automates all three tasks using an AI-powered multi-stage pipeline with engineered preprocessing, multimodal document understanding, and hybrid AI + rule-based validation.
 
+## Quick Deploy
+
+### Option 1: Render (recommended)
+1. Push this repository to GitHub.
+2. In Render, create a **Web Service** from the repository.
+3. Render auto-detects `render.yaml` and uses Docker build from `Dockerfile`.
+4. Set environment variables in Render:
+    - `GEMINI_API_KEY` (required for Gemini)
+    - `OPENAI_API_KEY` (optional, only if using OpenAI provider)
+    - `LLM_PROVIDER` (`gemini` or `openai`)
+5. Deploy. The app binds to `PORT` automatically.
+
+### Option 2: Any Docker host (Railway/Fly/VM)
+```bash
+docker build -t chargesheet-assistant .
+docker run -p 7860:7860 -e GEMINI_API_KEY=your_key -e LLM_PROVIDER=gemini chargesheet-assistant
+```
+
+App URL after start: `http://localhost:7860`
+
 ---
 
 ## 🏗️ System Architecture
@@ -19,7 +39,7 @@ This is time-consuming, error-prone, and delays justice delivery.
 ┌──────────────────────────────────────────────────────────────────┐
 │                        USER INTERFACE (Gradio)                   │
 │   Upload .docx/.pdf/.txt  │  Paste text  │  Select crime type   │
-│   Multi-key API input     │  Auto-detect │  Regenerate checklist │
+│    API input     │  Auto-detect │  Regenerate checklist │
 └──────────────────┬───────────────────────────────────────────────┘
                    │
                    ▼

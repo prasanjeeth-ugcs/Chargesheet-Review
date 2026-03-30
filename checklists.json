@@ -109,5 +109,27 @@
       {"id": "arrest_memo", "label_hi": "आरोपी का गिरफ्तारी मेमो", "label_en": "Accused's arrest memo"},
       {"id": "mandatory_compliance", "label_hi": "अनिवार्य प्रावधानों का अनुपालन नोट", "label_en": "Compliance with mandatory provisions"}
     ]
+  },
+
+  "homicide": {
+    "display_name": "हत्या / मृत्यु (Homicide)",
+    "display_name_en": "Homicide",
+    "typical_sections": ["IPC 302", "IPC 304", "BNS 103", "BNS 105"],
+    "keywords_hi": ["हत्या", "मृत्यु", "शव", "पोस्टमार्टम", "घातक"],
+    "keywords_en": ["murder", "homicide", "death", "postmortem", "fatal"],
+    "required_items": [
+      {"id": "fir", "label_hi": "प्राथमिकी (FIR) विवरण", "label_en": "FIR details"},
+      {"id": "place_time", "label_hi": "घटना का स्थान, दिनांक, समय", "label_en": "Place/date/time of occurrence"},
+      {"id": "accused", "label_hi": "आरोपी का विवरण", "label_en": "Accused details"},
+      {"id": "witnesses", "label_hi": "मुख्य गवाहों के बयान", "label_en": "Key witness statements"},
+      {"id": "postmortem", "label_hi": "पोस्टमार्टम रिपोर्ट", "label_en": "Postmortem report"},
+      {"id": "cause_of_death", "label_hi": "मृत्यु का कारण", "label_en": "Cause of death opinion"},
+      {"id": "injury_cert", "label_hi": "चोट/घाव विवरण", "label_en": "Injury description"},
+      {"id": "weapon_desc", "label_hi": "हथियार का विवरण", "label_en": "Weapon description"},
+      {"id": "weapon_seizure", "label_hi": "हथियार जब्ती मेमो", "label_en": "Weapon seizure memo"},
+      {"id": "forensic", "label_hi": "FSL / फॉरेंसिक रिपोर्ट", "label_en": "FSL / forensic report"},
+      {"id": "site_plan", "label_hi": "नक्शा मौका / स्थल निरीक्षण", "label_en": "Site plan / spot inspection"},
+      {"id": "chain_custody", "label_hi": "कस्टडी चेन रिकॉर्ड", "label_en": "Chain of custody record"}
+    ]
   }
 }

@@ -81,6 +81,7 @@ def run_analysis(file, raw_text, manual_crime_type, api_key):
                 "",
                 "",
                 "",
+                "",
             )
     elif raw_text and raw_text.strip():
         text = raw_text.strip()
@@ -144,31 +145,72 @@ def run_analysis(file, raw_text, manual_crime_type, api_key):
         )
 
     # Format outputs
-    summary = results["summary"]
+    summary = results.get("summary", "⚠️ No summary generated.")
 
     # Append field confidence table to summary
-    field_conf = results.get("field_confidence", {})
-    if field_conf:
-        summary += format_field_confidence(field_conf)
+    try:
+        field_conf = results.get("field_confidence", {})
+        if field_conf:
+            summary += format_field_confidence(field_conf)
 
-    classification_md = format_classification_output(
-        results["classification"],
-        results["rule_classification"],
-    )
+        confidence_scores = results.get("confidence_scores", {})
+        if confidence_scores:
+            ocr = confidence_scores.get("ocr_confidence", 0.0)
+            ext = confidence_scores.get("extraction_confidence", 0.0)
+            cls = confidence_scores.get("classification_confidence", 0.0)
+            ocr_warn_threshold = float(getattr(config, "OCR_LOW_QUALITY_THRESHOLD", 0.70))
+            if ocr < ocr_warn_threshold:
+                summary += (
+                    "\n\n> ⚠️ **OCR Quality Warning:** Document scan quality appears low. "
+                    "Some names/sections/dates may need manual review."
+                )
+            summary += (
+                "\n---\n\n"
+                "## 🎯 Pipeline Confidence Scores\n\n"
+                f"- OCR Confidence: **{ocr:.0%}**\n"
+                f"- Extraction Confidence: **{ext:.0%}**\n"
+                f"- Classification Confidence: **{cls:.0%}**\n"
+            )
+    except Exception as e:
+        logger.error(f"Field confidence formatting error: {e}", exc_info=True)
+
+    try:
+        classification_md = format_classification_output(
+            results["classification"],
+            results["rule_classification"],
+        )
+    except Exception as e:
+        logger.error(f"Classification formatting error: {e}", exc_info=True)
+        classification_md = f"⚠️ Error formatting classification: {e}"
 
     checklist_md = ""
-    for crime_key, cl_result in results["checklists"].items():
-        checklist_md += format_checklist_output(cl_result, crime_key)
-        checklist_md += "\n---\n\n"
+    try:
+        for crime_key, cl_result in results["checklists"].items():
+            checklist_md += format_checklist_output(cl_result, crime_key)
+            checklist_md += "\n---\n\n"
+    except Exception as e:
+        logger.error(f"Checklist formatting error: {e}", exc_info=True)
+        checklist_md = f"⚠️ Error formatting checklist: {e}"
 
     # NER output
-    ner_md = format_ner_output(results.get("ner_entities", []))
+    try:
+        ner_md = format_ner_output(results.get("ner_entities", []))
+    except Exception as e:
+        logger.error(f"NER formatting error: {e}", exc_info=True)
+        ner_md = f"⚠️ Error formatting NER output: {e}"
 
-    # Timeline output — use full document text for richer context
-    timeline_md = format_timeline_output(
-        results.get("ner_entities", []),
-        text,
-    )
+    # Timeline output — use OCR-cleaned preprocessed text for richer context
+    # (raw text may still contain ि/न corruption which leaks into snippets)
+    try:
+        clean_text = results.get("preprocessed_text", text)
+        timeline_md = format_timeline_output(
+            results.get("ner_entities", []),
+            summary,
+            clean_text,
+        )
+    except Exception as e:
+        logger.error(f"Timeline formatting error: {e}", exc_info=True)
+        timeline_md = f"⚠️ Error formatting timeline: {e}"
 
     # Stats
     max_len = getattr(config, 'MAX_TEXT_LENGTH', 80000)
@@ -182,6 +224,11 @@ def run_analysis(file, raw_text, manual_crime_type, api_key):
     )
     if was_truncated:
         stats += f"- ⚠️ Truncated to {max_len:,} chars for processing\n"
+
+    # Log output sizes for debugging
+    logger.info(f"UI outputs: summary={len(summary)} chars, classification={len(classification_md)} chars, "
+                f"checklist={len(checklist_md)} chars, ner={len(ner_md)} chars, "
+                f"timeline={len(timeline_md)} chars")
 
     return summary, classification_md, checklist_md, ner_md, timeline_md, stats
 
@@ -268,477 +315,26 @@ def build_app():
 
     with gr.Blocks(
         title=config.APP_TITLE,
-        theme=gr.themes.Base(
-            primary_hue=gr.themes.colors.sky,
-            secondary_hue=gr.themes.colors.orange,
-            neutral_hue=gr.themes.colors.stone,
-            font=("Inter", "system-ui", "sans-serif"),
-            font_mono=("JetBrains Mono", "Fira Code", "monospace"),
-        ).set(
-            body_background_fill="#f5f5f0",
-            body_background_fill_dark="#f5f5f0",
-            body_text_color="#2b2d42",
-            body_text_color_dark="#2b2d42",
-            block_background_fill="#ffffff",
-            block_background_fill_dark="#ffffff",
-            block_border_width="1px",
-            block_border_color="#e5e7eb",
-            block_border_color_dark="#e5e7eb",
-            block_label_text_color="#6c757d",
-            block_label_text_color_dark="#6c757d",
-            block_title_text_color="#2b2d42",
-            block_title_text_color_dark="#2b2d42",
-            input_background_fill="#ffffff",
-            input_background_fill_dark="#ffffff",
-            input_border_color="#d1d5db",
-            input_border_color_dark="#d1d5db",
-            input_placeholder_color="#9ca3af",
-            button_primary_background_fill="linear-gradient(135deg, #0369a1 0%, #0284c7 100%)",
-            button_primary_background_fill_dark="linear-gradient(135deg, #0369a1 0%, #0284c7 100%)",
-            button_primary_background_fill_hover="linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)",
-            button_primary_background_fill_hover_dark="linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)",
-            button_primary_text_color="#ffffff",
-            button_primary_border_color="transparent",
-            button_secondary_background_fill="#ffffff",
-            button_secondary_background_fill_dark="#ffffff",
-            button_secondary_background_fill_hover="#f0f9ff",
-            button_secondary_background_fill_hover_dark="#f0f9ff",
-            button_secondary_text_color="#0369a1",
-            button_secondary_border_color="#d1d5db",
-            border_color_primary="#0369a1",
-            shadow_drop="0 1px 3px rgba(0,0,0,0.08)",
-            shadow_drop_lg="0 4px 14px rgba(0,0,0,0.08)",
-            checkbox_background_color="#ffffff",
-            checkbox_background_color_dark="#ffffff",
-            color_accent="#0ea5e9",
-            color_accent_soft="#e0f2fe",
-            link_text_color="#0284c7",
-            link_text_color_hover="#0ea5e9",
-            link_text_color_dark="#0284c7",
-            link_text_color_hover_dark="#0ea5e9",
-            link_text_color_visited="#0369a1",
-            link_text_color_visited_dark="#0369a1",
-            link_text_color_active="#38bdf8",
-            link_text_color_active_dark="#38bdf8",
-        ),
-        css="""
-        /* ══════════════════════════════════════════════════════
-           CLEAN LIGHT PALETTE — SKY BLUE
-           Sky Blue:  #0369a1 / #0284c7 / #0ea5e9 / #7dd3fc / #e0f2fe
-           Orange:    #e76f51 / #f4845f / #f4a261
-           BG:        #f5f5f0 / #ffffff / #fafaf8
-           Text:      #2b2d42 / #495057 / #6c757d
-           Border:    #e5e7eb / #d1d5db
-        ══════════════════════════════════════════════════════ */
-
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-
-        /* ── Global ── */
-        .gradio-container {
-            max-width: 1400px !important;
-            margin: auto !important;
-            background: #f5f5f0 !important;
-        }
-
-        .gradio-container p, .gradio-container li, .gradio-container td,
-        .gradio-container input, .gradio-container textarea, .gradio-container select,
-        .gradio-container button, .gradio-container label, .gradio-container span {
-            font-family: 'Inter', system-ui, sans-serif !important;
-        }
-        .gradio-container h1, .gradio-container h2, .gradio-container h3 {
-            font-family: 'DM Sans', 'Inter', sans-serif !important;
-        }
-
-        /* ── Hero Header ── */
-        .hero-header {
-            background: linear-gradient(135deg, #7dd3fc 0%, #bae6fd 40%, #e0f2fe 100%);
-            border: none;
-            border-radius: 20px;
-            padding: 40px 32px 32px;
-            margin-bottom: 28px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(125, 211, 252, 0.2);
-        }
-        .hero-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background:
-                radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(255,255,255,0.05) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        .hero-header::after {
-            display: none;
-        }
-        .hero-header h1 {
-            font-size: 2.2rem !important;
-            font-weight: 800 !important;
-            color: #0c4a6e !important;
-            -webkit-text-fill-color: #0c4a6e !important;
-            background: none !important;
-            margin-bottom: 8px !important;
-            letter-spacing: 0.3px;
-        }
-        .hero-header p {
-            color: #1e3a5f !important;
-            font-size: 0.95rem !important;
-            margin: 4px 0 !important;
-        }
-        .hero-header .tagline {
-            color: #0369a1 !important;
-            -webkit-text-fill-color: #0369a1 !important;
-            background: none !important;
-            font-weight: 700;
-            font-size: 1.05rem !important;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-        .hero-header .divider {
-            width: 120px;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #0284c7, transparent);
-            margin: 12px auto;
-        }
-
-        /* ── Section Headers ── */
-        .section-label h3 {
-            color: #0369a1 !important;
-            font-weight: 700 !important;
-            font-size: 1.15rem !important;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            border-bottom: 2px solid;
-            border-image: linear-gradient(90deg, #0369a1, #7dd3fc, transparent) 1;
-            padding-bottom: 10px;
-            margin-bottom: 14px !important;
-        }
-
-        /* ── Input Panel ── */
-        .input-panel {
-            background: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 14px !important;
-            padding: 10px !important;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .input-panel .gr-input, .input-panel textarea, .input-panel input {
-            background: #fafaf8 !important;
-            border-color: #d1d5db !important;
-            color: #2b2d42 !important;
-            border-radius: 8px !important;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-        .input-panel .gr-input:focus, .input-panel textarea:focus, .input-panel input:focus {
-            border-color: #0284c7 !important;
-            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12), 0 0 12px rgba(2, 132, 199, 0.06) !important;
-        }
-
-        /* ── Buttons ── */
-        .action-buttons button {
-            border-radius: 10px !important;
-            font-weight: 600 !important;
-            letter-spacing: 0.3px;
-            transition: all 0.25s ease;
-            padding: 11px 26px !important;
-            font-size: 0.85rem !important;
-        }
-        .action-buttons button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(3, 105, 161, 0.2);
-        }
-        .action-buttons .primary {
-            min-width: 140px;
-        }
-
-        /* ── Results Panel ── */
-        .results-panel {
-            background: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 14px !important;
-            overflow: hidden;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-
-        /* ── Tabs ── */
-        .gr-tab-nav {
-            background: #fafaf8 !important;
-            border-bottom: 1px solid #e5e7eb !important;
-            border-radius: 14px 14px 0 0 !important;
-            padding: 6px 10px 0 !important;
-            gap: 2px !important;
-        }
-        .gr-tab-nav button {
-            background: transparent !important;
-            color: #9ca3af !important;
-            border: none !important;
-            border-bottom: 2px solid transparent !important;
-            border-radius: 8px 8px 0 0 !important;
-            padding: 10px 16px !important;
-            font-weight: 600 !important;
-            font-size: 0.85rem !important;
-            letter-spacing: 0.3px;
-            transition: all 0.25s ease !important;
-        }
-        .gr-tab-nav button:hover {
-            color: #0284c7 !important;
-            background: #f0f9ff !important;
-        }
-        .gr-tab-nav button.selected {
-            color: #0369a1 !important;
-            border-bottom-color: transparent !important;
-            background: #ffffff !important;
-            box-shadow: inset 0 -2px 0 0 #0369a1;
-        }
-
-        /* ── Output Box ── */
-        .output-box {
-            min-height: 300px;
-            padding: 26px !important;
-            background: #ffffff !important;
-            border-radius: 0 0 12px 12px !important;
-            border: 1px solid #e5e7eb !important;
-            border-top: none !important;
-            line-height: 1.8;
-            color: #2b2d42 !important;
-        }
-        .output-box h2 {
-            color: #0369a1 !important;
-            -webkit-text-fill-color: #0369a1 !important;
-            background: none !important;
-            font-weight: 700 !important;
-            font-size: 1.35rem !important;
-            margin-top: 22px !important;
-            margin-bottom: 14px !important;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e0f2fe;
-            letter-spacing: 0.3px;
-        }
-        .output-box h3 {
-            color: #0284c7 !important;
-            font-weight: 600 !important;
-            font-size: 1.1rem !important;
-            margin-top: 16px !important;
-            letter-spacing: 0.3px;
-        }
-        .output-box strong {
-            color: #1a1a2e !important;
-        }
-        .output-box blockquote {
-            border-left: 3px solid #0ea5e9 !important;
-            background: linear-gradient(90deg, rgba(224,242,254,0.4) 0%, rgba(255,255,255,0) 100%) !important;
-            padding: 12px 18px !important;
-            margin: 10px 0 !important;
-            border-radius: 0 10px 10px 0 !important;
-            color: #495057 !important;
-        }
-        .output-box table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 14px 0;
-            border: 1px solid #e5e7eb;
-        }
-        .output-box table th {
-            background: #f0f9ff !important;
-            color: #0369a1 !important;
-            font-weight: 600;
-            padding: 12px 14px;
-            text-align: left;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Inter', sans-serif !important;
-        }
-        .output-box table td {
-            padding: 10px 14px;
-            border-top: 1px solid #f3f4f6;
-            color: #495057;
-            font-size: 0.9rem;
-        }
-        .output-box table tr:nth-child(even) td {
-            background: #fafaf8;
-        }
-        .output-box table tr:hover td {
-            background: #f0f9ff;
-        }
-
-        /* ── Stats Card ── */
-        .stats-card {
-            background: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 12px !important;
-            padding: 18px !important;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .stats-card::before {
-            content: '';
-            position: absolute;
-            top: -10px; right: -10px;
-            width: 100px; height: 100px;
-            background: radial-gradient(circle, rgba(3,105,161,0.06) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .stats-card p, .stats-card li {
-            color: #6c757d !important;
-            font-size: 0.9rem !important;
-        }
-        .stats-card strong {
-            color: #0369a1 !important;
-        }
-
-        /* ── Download Section ── */
-        .download-section {
-            margin-top: 16px;
-        }
-        .download-section button {
-            background: linear-gradient(135deg, #e76f51 0%, #f4845f 100%) !important;
-            border: none !important;
-            border-radius: 12px !important;
-            color: #ffffff !important;
-            font-weight: 600 !important;
-            font-size: 0.85rem !important;
-            padding: 13px 32px !important;
-            transition: all 0.25s ease !important;
-            width: 100%;
-            letter-spacing: 0.5px;
-        }
-        .download-section button:hover {
-            background: linear-gradient(135deg, #f4845f 0%, #f4a261 100%) !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(231, 111, 81, 0.3) !important;
-        }
-
-        /* ── Report File ── */
-        .report-file {
-            margin-top: 8px;
-        }
-        .report-file .gr-file {
-            background: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 10px !important;
-        }
-
-        /* ── Footer ── */
-        .footer-section {
-            background: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 14px !important;
-            padding: 24px 28px !important;
-            margin-top: 12px !important;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .footer-section::before {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #0369a1, #0ea5e9, #0284c7, transparent);
-            opacity: 0.6;
-        }
-        .footer-section h3 {
-            color: #0369a1 !important;
-            -webkit-text-fill-color: #0369a1 !important;
-            background: none !important;
-            font-size: 1.1rem !important;
-            font-weight: 700 !important;
-            margin-bottom: 10px !important;
-            letter-spacing: 0.5px;
-        }
-        .footer-section li, .footer-section p {
-            color: #6c757d !important;
-            font-size: 0.85rem !important;
-            line-height: 1.7;
-        }
-        .footer-section strong {
-            color: #495057 !important;
-        }
-        .footer-section a {
-            color: #0369a1 !important;
-            text-decoration: none;
-            border-bottom: 1px dotted rgba(3, 105, 161, 0.4);
-            transition: all 0.2s;
-        }
-        .footer-section a:hover {
-            color: #0284c7 !important;
-            border-bottom-color: #0284c7;
-        }
-
-        /* ── Scrollbar ── */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f5f5f0; }
-        ::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
-        /* ── Code blocks ── */
-        .output-box code {
-            background: #f0f9ff !important;
-            color: #0369a1 !important;
-            padding: 2px 7px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            border: 1px solid #e0f2fe;
-        }
-
-        /* ── Markdown lists ── */
-        .output-box ul, .output-box ol {
-            padding-left: 20px;
-        }
-        .output-box li {
-            margin-bottom: 5px;
-            color: #495057;
-        }
-        .output-box li::marker {
-            color: #0284c7;
-        }
-
-        /* ── HR / Dividers ── */
-        .output-box hr {
-            border: none;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #d1d5db, #7dd3fc, #d1d5db, transparent);
-            margin: 22px 0;
-        }
-
-        /* ── File component ── */
-        .gr-file { border-radius: 10px !important; }
-
-        /* ── Responsive ── */
-        @media (max-width: 768px) {
-            .hero-header h1 { font-size: 1.5rem !important; }
-            .gr-tab-nav button { padding: 8px 10px !important; font-size: 0.78rem !important; }
-        }
-        """,
+        theme=gr.themes.Soft(),
+        css=".sticky-panel { position: sticky; top: 20px; align-self: flex-start; }",
     ) as app:
-        # ── Hero Header ──
+        # ── Header ──
         gr.Markdown(
-            f"""
-            <div class="hero-header">
-                <h1>Smart Chargesheet Review & Summarisation Assistant</h1>
-                <div class="divider"></div>
-                <p class="tagline">AI-Powered Legal Document Analysis</p>
-                <p>Upload a Hindi chargesheet &rarr; Get structured summary, crime classification, NER & missing documents checklist</p>
+            """
+            <div style="text-align: center; padding: 20px 0 10px;">
+                <h1 style="margin-bottom: 5px;">Smart Chargesheet Review & Summarisation Assistant</h1>
+                <p style="font-size: 1.1rem; opacity: 0.8;"><strong>AI-Powered Legal Document Analysis</strong></p>
+                <p style="font-size: 0.95rem; opacity: 0.7;">Upload a Hindi chargesheet → Get structured summary, crime classification, NER & missing documents checklist</p>
             </div>
             """
         )
 
         with gr.Row(equal_height=False):
             # ── Left: Input Panel ──
-            with gr.Column(scale=1, min_width=320):
-                gr.Markdown("### Input", elem_classes=["section-label"])
+            with gr.Column(scale=1, min_width=350, elem_classes=["sticky-panel"]):
+                gr.Markdown("### 📁 Input")
 
-                with gr.Group(elem_classes=["input-panel"]):
+                with gr.Group():
                     api_key_input = gr.Textbox(
                         label="API Key",
                         placeholder="Enter your Gemini API key",
@@ -755,8 +351,8 @@ def build_app():
                     text_input = gr.Textbox(
                         label="Or Paste Text",
                         placeholder="Paste chargesheet text here...",
-                        lines=8,
-                        max_lines=20,
+                        lines=6,
+                        max_lines=12,
                     )
 
                     crime_type_dropdown = gr.Dropdown(
@@ -766,106 +362,130 @@ def build_app():
                         info="Auto-detect or manually override",
                     )
 
-                with gr.Row(elem_classes=["action-buttons"]):
+                with gr.Row():
                     analyse_btn = gr.Button(
-                        "Analyse",
+                        "🔍 Analyse",
                         variant="primary",
                         size="lg",
-                        elem_classes=["primary"],
+                        scale=2,
                     )
                     regen_btn = gr.Button(
-                        "Regenerate Checklist",
+                        "🔄 Regenerate",
                         variant="secondary",
+                        scale=1,
                     )
 
-                stats_output = gr.Markdown(
-                    label="Stats",
-                    elem_classes=["stats-card"],
-                )
+                stats_output = gr.Markdown(label="Processing Stats")
 
             # ── Right: Results Panel ──
-            with gr.Column(scale=2, min_width=600):
-                gr.Markdown("### Analysis Results", elem_classes=["section-label"])
+            with gr.Column(scale=2, min_width=500):
+                gr.Markdown("### 📊 Analysis Results")
 
-                with gr.Group(elem_classes=["results-panel"]):
-                    with gr.Tabs():
-                        with gr.TabItem("Summary"):
-                            summary_output = gr.Markdown(
-                                label="Summary",
-                                elem_classes=["output-box"],
-                            )
+                # Processing status indicator
+                processing_status = gr.HTML(visible=False)
 
-                        with gr.TabItem("Classification"):
-                            classification_output = gr.Markdown(
-                                label="Classification",
-                                elem_classes=["output-box"],
-                            )
+                with gr.Tabs():
+                    with gr.TabItem("📝 Summary"):
+                        summary_output = gr.Markdown(label="Summary")
 
-                        with gr.TabItem("Checklist"):
-                            checklist_output = gr.Markdown(
-                                label="Checklist",
-                                elem_classes=["output-box"],
-                            )
+                    with gr.TabItem("🏷️ Classification"):
+                        classification_output = gr.Markdown(label="Classification")
 
-                        with gr.TabItem("NER Entities"):
-                            ner_output = gr.Markdown(
-                                label="NER",
-                                elem_classes=["output-box"],
-                            )
+                    with gr.TabItem("✅ Checklist"):
+                        checklist_output = gr.Markdown(label="Checklist")
 
-                        with gr.TabItem("Case Timeline"):
-                            timeline_output = gr.Markdown(
-                                label="Timeline",
-                                elem_classes=["output-box"],
-                            )
+                    with gr.TabItem("👤 NER Entities"):
+                        ner_output = gr.Markdown(label="NER")
 
-                # Download button + hidden file that appears after generation
-                with gr.Row(elem_classes=["download-section"]):
+                    with gr.TabItem("📅 Timeline"):
+                        timeline_output = gr.Markdown(label="Timeline")
+
+                # Download button
+                with gr.Row():
                     download_btn = gr.Button(
-                        "Download Full Report",
+                        "📥 Download Full Report",
                         variant="secondary",
                         size="lg",
                     )
-                with gr.Column(elem_classes=["report-file"]):
-                    report_file = gr.File(
-                        visible=False,
-                        interactive=False,
-                        label="Report Ready",
-                    )
+
+                report_file = gr.File(
+                    visible=False,
+                    interactive=False,
+                    label="Report Ready",
+                )
 
         # Wire up events
+
+        _PROCESSING_HTML = """
+        <div id="processing-box" style="display:flex; align-items:center; gap:12px; padding:14px 20px; border-radius:10px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.22); margin-bottom:10px;">
+            <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.25); border-top:3px solid #6366f1; border-radius:50%; animation:cs-spin 0.8s linear infinite;"></div>
+            <div>
+                <div style="font-weight:600; color:#6366f1; font-size:0.95rem;">⏳ Processing your document...</div>
+                <div id="cs-timer-text" style="font-size:0.85rem; color:#6b7280;">Elapsed: 0s</div>
+            </div>
+        </div>
+        <style>@keyframes cs-spin { to { transform: rotate(360deg); } }</style>
+        """
+
+        _START_TIMER_JS = """
+        () => {
+            window._csStart = Date.now();
+            if (window._csTimer) clearInterval(window._csTimer);
+            window._csTimer = setInterval(() => {
+                const el = document.getElementById('cs-timer-text');
+                if (el) el.textContent = 'Elapsed: ' + Math.floor((Date.now() - window._csStart) / 1000) + 's';
+            }, 500);
+        }
+        """
+
+        _STOP_TIMER_JS = """
+        () => {
+            if (window._csTimer) { clearInterval(window._csTimer); window._csTimer = null; }
+        }
+        """
+
+        def _show_processing():
+            return gr.update(value=_PROCESSING_HTML, visible=True)
+
+        def _hide_processing():
+            return gr.update(value="", visible=False)
+
         analyse_btn.click(
+            fn=_show_processing,
+            inputs=[],
+            outputs=[processing_status],
+            js=_START_TIMER_JS,
+        ).then(
             fn=run_analysis,
             inputs=[file_input, text_input, crime_type_dropdown, api_key_input],
             outputs=[summary_output, classification_output, checklist_output, ner_output, timeline_output, stats_output],
+        ).then(
+            fn=_hide_processing,
+            inputs=[],
+            outputs=[processing_status],
+            js=_STOP_TIMER_JS,
         )
 
         regen_btn.click(
             fn=regenerate_checklist,
             inputs=[file_input, text_input, crime_type_dropdown, api_key_input],
             outputs=[checklist_output],
+            show_progress="full",
         )
 
         download_btn.click(
             fn=generate_report,
             inputs=[file_input, text_input, api_key_input, summary_output, classification_output, checklist_output, ner_output, timeline_output],
             outputs=[report_file],
+            show_progress="full",
         )
 
         # Footer
         gr.Markdown(
             """
-            <div class="footer-section">
-            <h3>How to Use</h3>
-            <ol>
-            <li>Enter your <strong>Gemini API Key</strong> &mdash; get one free at <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></li>
-            <li><strong>Upload</strong> a chargesheet (.txt / .pdf / .docx) or <strong>paste text</strong></li>
-            <li>Click <strong>Analyse</strong> &mdash; results appear across five tabs</li>
-            <li>Click <strong>Download Full Report</strong> to save a combined markdown file</li>
-            <li>(Optional) Override crime type and click <strong>Regenerate Checklist</strong></li>
-            </ol>
-            <h3>Technical Highlights</h3>
-            <p>Multi-Key Rotation &bull; Gemini 2.5 Flash with 1M context &bull; Hybrid LLM + Rule Classification &bull; Semantic Similarity Matching &bull; Model Fallback Chain &bull; Hindi Output</p>
+            ---
+            <div style="text-align: center; padding: 15px 0;">
+                <p style="font-size: 0.9rem; opacity: 0.7;"><strong>How to Use:</strong> Enter API Key → Upload/Paste Document → Click Analyse → View Results → Download Report</p>
             </div>
             """
         )
@@ -877,9 +497,11 @@ def build_app():
 
 if __name__ == "__main__":
     app = build_app()
+    port = int(os.getenv("PORT", "7860"))
+    host = os.getenv("HOST", "0.0.0.0")
     app.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
+        server_name=host,
+        server_port=port,
         share=False,
         show_error=True,
     )
